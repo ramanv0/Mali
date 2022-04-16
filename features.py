@@ -12,11 +12,16 @@ It may be useful to do feature selection to reduce this set of features to a mea
 for your modeling problem.
 '''
 
+import argparse
+import os
 import re
 import lief
 import hashlib
 import numpy as np
 from sklearn.feature_extraction import FeatureHasher
+from sklearn.model_selection import train_test_split
+from autogluon.tabular import TabularDataset, TabularPredictor
+import pandas as pd
 
 LIEF_MAJOR, LIEF_MINOR, _ = lief.__version__.split('.')
 LIEF_EXPORT_OBJECT = int(LIEF_MAJOR) > 0 or ( int(LIEF_MAJOR)==0 and int(LIEF_MINOR) >= 10 )
@@ -498,21 +503,21 @@ class PEFeatureExtractor(object):
             ImportsInfo(),
             ExportsInfo()
         ]
-        #if feature_version == 1:
-        #    if not lief.__version__.startswith("0.8.3"):
-        #        if print_feature_warning:
-                    #print(f"WARNING: EMBER feature version 1 were computed using lief version 0.8.3-18d5b75")
-                    #print(f"WARNING:   lief version {lief.__version__} found instead. There may be slight inconsistencies")
-                    #print(f"WARNING:   in the feature calculations.")
+        if feature_version == 1:
+            if not lief.__version__.startswith("0.8.3"):
+                if print_feature_warning:
+                    print(f"WARNING: EMBER feature version 1 were computed using lief version 0.8.3-18d5b75")
+                    print(f"WARNING:   lief version {lief.__version__} found instead. There may be slight inconsistencies")
+                    print(f"WARNING:   in the feature calculations.")
         if feature_version == 2:
             self.features.append(DataDirectories())
-            #if not lief.__version__.startswith("0.9.0"):
-                #if print_feature_warning:
-                #    print(f"WARNING: EMBER feature version 2 were computed using lief version 0.9.0-")
-                #    print(f"WARNING:   lief version {lief.__version__} found instead. There may be slight inconsistencies")
-                #    print(f"WARNING:   in the feature calculations.")
-        #else:
-        #    raise Exception(f"EMBER feature version must be 1 or 2. Not {feature_version}")
+            if not lief.__version__.startswith("0.9.0"):
+                if print_feature_warning:
+                    print(f"WARNING: EMBER feature version 2 were computed using lief version 0.9.0-")
+                    print(f"WARNING:   lief version {lief.__version__} found instead. There may be slight inconsistencies")
+                    print(f"WARNING:   in the feature calculations.")
+        else:
+            raise Exception(f"EMBER feature version must be 1 or 2. Not {feature_version}")
         self.dim = sum([fe.dim for fe in self.features])
 
     def raw_features(self, bytez):
@@ -523,7 +528,7 @@ class PEFeatureExtractor(object):
         except lief_errors as e:
             print("lief error: ", str(e))
             lief_binary = None
-        except Exception:  # everything else (KeyboardInterrupt, SystemExit, ValueError):
+        except Exception:
             raise
 
         features = {"sha256": hashlib.sha256(bytez).hexdigest()}
@@ -537,10 +542,39 @@ class PEFeatureExtractor(object):
     def feature_vector(self, bytez):
         return self.process_raw_features(self.raw_features(bytez))
 
-def predict_sample(lgbm_model, file_data, feature_version=2):
+
+def predict_sample(model, file_data, feature_version=2):
     """
-    Predict a PE file with an LightGBM model
+    Predict a PE file with the best model trained by TabularPredictor.
     """
     extractor = PEFeatureExtractor(feature_version)
     features = np.array(extractor.feature_vector(file_data), dtype=np.float32)
-    return lgbm_model.predict([features])[0]
+    return model.predict(pd.DataFrame([features]))[0]
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Use Mali to classify your PE files")
+    parser.add_argument("-v", "--featureversion", type=int, default=2, help="Feature version")
+    parser.add_argument("binaries", metavar="BINARIES", type=str, nargs="+", help="PE files to classify")
+    args = parser.parse_args()
+
+    model_path = 'models/ag_test'
+    if not os.path.exists(model_path):
+        parser.error("model {} does not exist".format(model_path))
+    
+    predictor = TabularPredictor.load(model_path)
+    for binary_path in args.binaries:
+        if not os.path.exists(binary_path):
+            print("{} does not exist".format(binary_path))
+
+        file_data = open(binary_path, "rb").read()
+        score = predict_sample(predictor, file_data, args.featureversion)
+
+        if len(args.binaries) == 1:
+            print(score)
+        else:
+            print("\t".join((binary_path, str(score))))
+
+
+if __name__ == "__main__":
+    main()
