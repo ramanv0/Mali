@@ -1,0 +1,9 @@
+.git
+.cache
+*.csv
+!dataset/bodmas_malware_category.csv
+*.npz
+model.py
+explore_data_set.ipynb
+__pycache__
+README.md

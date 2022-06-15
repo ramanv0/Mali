@@ -1,16 +1,5 @@
 #!/usr/bin/python
-''' Extracts some basic features from PE files. Many of the features
-implemented have been used in previously published works. For more information,
-check out the following resources:
-* Schultz, et al., 2001: http://128.59.14.66/sites/default/files/binaryeval-ieeesp01.pdf
-* Kolter and Maloof, 2006: http://www.jmlr.org/papers/volume7/kolter06a/kolter06a.pdf
-* Shafiq et al., 2009: https://www.researchgate.net/profile/Fauzan_Mirza/publication/242084613_A_Framework_for_Efficient_Mining_of_Structural_Information_to_Detect_Zero-Day_Malicious_Portable_Executables/links/0c96052e191668c3d5000000.pdf
-* Raman, 2012: http://2012.infosecsouthwest.com/files/speaker_materials/ISSW2012_Selecting_Features_to_Classify_Malware.pdf
-* Saxe and Berlin, 2015: https://arxiv.org/pdf/1508.03096.pdf
-
-It may be useful to do feature selection to reduce this set of features to a meaningful set
-for your modeling problem.
-'''
+''' Extracts some basic features from PE files.'''
 
 import argparse
 import os
@@ -19,8 +8,7 @@ import lief
 import hashlib
 import numpy as np
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.model_selection import train_test_split
-from autogluon.tabular import TabularDataset, TabularPredictor
+from autogluon.tabular import TabularPredictor
 import pandas as pd
 
 LIEF_MAJOR, LIEF_MINOR, _ = lief.__version__.split('.')
@@ -29,7 +17,7 @@ LIEF_HAS_SIGNATURE = int(LIEF_MAJOR) > 0 or (int(LIEF_MAJOR) == 0 and int(LIEF_M
 
 
 class FeatureType(object):
-    ''' Base class from which each feature type may inherit '''
+    ''' Base class from which each feature type may inherit. '''
 
     name = ''
     dim = 0
@@ -52,7 +40,7 @@ class FeatureType(object):
 
 
 class ByteHistogram(FeatureType):
-    ''' Byte histogram (count + non-normalized) over the entire binary file '''
+    ''' Byte histogram (count + non-normalized) over the entire binary file. '''
 
     name = 'histogram'
     dim = 256
@@ -74,7 +62,6 @@ class ByteHistogram(FeatureType):
 class ByteEntropyHistogram(FeatureType):
     ''' 2d byte/entropy histogram based loosely on (Saxe and Berlin, 2015).
     This roughly approximates the joint probability of byte value and local entropy.
-    See Section 2.1.1 in https://arxiv.org/pdf/1508.03096.pdf for more info.
     '''
 
     name = 'byteentropy'
@@ -197,8 +184,7 @@ class SectionInfo(FeatureType):
 
 class ImportsInfo(FeatureType):
     ''' Information about imported libraries and functions from the
-    import address table.  Note that the total number of imported
-    functions is contained in GeneralFileInfo.
+    import address table.
     '''
 
     name = 'imports'
@@ -240,9 +226,7 @@ class ImportsInfo(FeatureType):
 
 
 class ExportsInfo(FeatureType):
-    ''' Information about exported functions. Note that the total number of exported
-    functions is contained in GeneralFileInfo.
-    '''
+    ''' Information about exported functions. '''
 
     name = 'exports'
     dim = 128
@@ -272,7 +256,7 @@ class ExportsInfo(FeatureType):
 
 
 class GeneralFileInfo(FeatureType):
-    ''' General information about the file '''
+    ''' General information about the file. '''
 
     name = 'general'
     dim = 10
@@ -318,7 +302,7 @@ class GeneralFileInfo(FeatureType):
 
 
 class HeaderFileInfo(FeatureType):
-    ''' Machine, architecure, OS, linker and other information extracted from header '''
+    ''' Machine, architecure, OS, linker and other information extracted from header. '''
 
     name = 'header'
     dim = 62
@@ -394,7 +378,7 @@ class HeaderFileInfo(FeatureType):
 
 
 class StringExtractor(FeatureType):
-    ''' Extracts strings from raw byte stream '''
+    ''' Extracts strings from raw byte stream. '''
 
     name = 'strings'
     dim = 1 + 1 + 1 + 96 + 1 + 1 + 1 + 1 + 1
@@ -454,7 +438,7 @@ class StringExtractor(FeatureType):
 
 
 class DataDirectories(FeatureType):
-    ''' Extracts size and virtual address of the first 15 data directories '''
+    ''' Extracts size and virtual address of the first 15 data directories. '''
 
     name = 'datadirectories'
     dim = 15 * 2
@@ -506,18 +490,18 @@ class PEFeatureExtractor(object):
         if feature_version == 1:
             if not lief.__version__.startswith("0.8.3"):
                 if print_feature_warning:
-                    print(f"WARNING: EMBER feature version 1 were computed using lief version 0.8.3-18d5b75")
+                    print(f"WARNING: Mali feature version 1 was computed using lief version 0.8.3-18d5b75")
                     print(f"WARNING:   lief version {lief.__version__} found instead. There may be slight inconsistencies")
                     print(f"WARNING:   in the feature calculations.")
         if feature_version == 2:
             self.features.append(DataDirectories())
             if not lief.__version__.startswith("0.9.0"):
                 if print_feature_warning:
-                    print(f"WARNING: EMBER feature version 2 were computed using lief version 0.9.0-")
+                    print(f"WARNING: Mali feature version 2 was computed using lief version 0.9.0-")
                     print(f"WARNING:   lief version {lief.__version__} found instead. There may be slight inconsistencies")
                     print(f"WARNING:   in the feature calculations.")
         else:
-            raise Exception(f"EMBER feature version must be 1 or 2. Not {feature_version}")
+            raise Exception(f"Mali feature version must be 1 or 2. Not {feature_version}")
         self.dim = sum([fe.dim for fe in self.features])
 
     def raw_features(self, bytez):
@@ -533,23 +517,23 @@ class PEFeatureExtractor(object):
 
         features = {"sha256": hashlib.sha256(bytez).hexdigest()}
         features.update({fe.name: fe.raw_features(bytez, lief_binary) for fe in self.features})
-        return features
+        return (features, features["sha256"])
 
     def process_raw_features(self, raw_obj):
         feature_vectors = [fe.process_raw_features(raw_obj[fe.name]) for fe in self.features]
         return np.hstack(feature_vectors).astype(np.float32)
 
     def feature_vector(self, bytez):
-        return self.process_raw_features(self.raw_features(bytez))
+        extract_raw_features = self.raw_features(bytez)
+        return (self.process_raw_features(extract_raw_features[0]), extract_raw_features[1])
 
 
 def predict_sample(model, file_data, feature_version=2):
-    """
-    Predict a PE file with the best model trained by TabularPredictor.
-    """
+    """ Predict a PE file with the best model trained by TabularPredictor. """
     extractor = PEFeatureExtractor(feature_version)
-    features = np.array(extractor.feature_vector(file_data), dtype=np.float32)
-    return model.predict(pd.DataFrame([features]))[0]
+    feature_vector = extractor.feature_vector(file_data)
+    features = np.array(feature_vector[0], dtype=np.float32)
+    return (model.predict(pd.DataFrame([features]))[0], feature_vector[1])
 
 
 def main():
@@ -568,10 +552,15 @@ def main():
             print("{} does not exist".format(binary_path))
 
         file_data = open(binary_path, "rb").read()
-        score = predict_sample(predictor, file_data, args.featureversion)
+        score, sha256 = predict_sample(predictor, file_data, args.featureversion)
 
         if len(args.binaries) == 1:
-            print(score)
+            if score == 0:
+                print(score)
+            else:
+                family_data = pd.read_csv("bodmas_malware_category.csv")
+                if (family_data['sha256'].str.contains(sha256)):
+                    print("Identified malware family: " + family_data.loc[family_data['sha256'] == sha256, 'category'])
         else:
             print("\t".join((binary_path, str(score))))
 

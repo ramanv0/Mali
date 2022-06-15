@@ -5,7 +5,7 @@ import pandas as pd
 
 def train_model():
     """
-    Train the model from the EMBER dataset
+    Train the model from the Bodmas dataset
     """
     filename = 'dataset/bodmas.npz'
     data = np.load(filename)
