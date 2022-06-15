@@ -1,2 +1,2 @@
 # Mali
-Mali: A malware classification tool (draft).
+Mali: A malware classification tool (beta version).
