@@ -39,7 +39,7 @@ The following machine learning models were evaluated:
 - Random forest (using Gini impurity as the node splitting criterion)
 - Tabular deep neural network
 
-A weighted ensemble model, which combines predictions from extra-trees, random forest, CatBoost, and deep neural network classifiers, had the highest classification accuracy and, thus, is used as the final model.
+A weighted ensemble model––which combines predictions from extra-trees, random forest, CatBoost, and deep neural network classifiers––had the highest classification accuracy and, thus, is used as the final model.
 
 ## Results
 |   |               model | score_test | score_val | pred_time_test | pred_time_val |    fit_time | pred_time_test_marginal | pred_time_val_marginal | fit_time_marginal | stack_level | can_infer | fit_order |
