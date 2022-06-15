@@ -9,7 +9,7 @@ The BODMAS Malware dataset was used to train the classification model. It contai
 - feature vectors (~250 MB): `bodmas.npz`
 - metadata (~12 MB): `bodmas_metadata.csv` 
 
-They are sorted by the timestamp in the ascending order (i.e., each feature vector corresponds to one row in the metadata file). `bodmas_metadata.csv` has three columns, indicating SHA-256, when the sample first appeared, and malware family. If the malware family is empty, then it’s a benign sample.
+They are sorted by the timestamp in ascending order (i.e., each feature vector corresponds to one row in the metadata file). `bodmas_metadata.csv` has three columns, indicating SHA-256, when the sample first appeared, and malware family. If the malware family is empty, then it’s a benign sample.
 
 To load the feature vectors, you need to load `bodmas.npz` (a numpy compressed format) with the following code. Note that the feature values are unnormalized, which is fine for classifiers like gradient-boosted decision tree, but you may need to normalize them first when applying an MLP classifier.
 
@@ -24,7 +24,7 @@ print(X.shape, y.shape) # >>> (134435, 2381), (134435,)
 To learn more about the BODMAS dataset, you can visit this [link](https://whyisyoung.github.io/BODMAS/).
 
 ## Feature Engineering
-The LIEF project is used to extract features from PE files. Raw features are extracted into JSON format and vectorized features are produced from these raw features and saved in binary format, from which they are converted into CSV or dataframes. The feature calculation is versioned:
+The LIEF library was used to extract features from PE files. Raw features are extracted into JSON format and vectorized features are produced from these raw features and saved in binary format, from which they are converted into CSV or dataframes. The feature calculation is versioned:
 - Feature version 1 is calculated with the LIEF library version 0.8.3.
 - Feature version 2 includes the additional data directory feature, updated ordinal import processing, and is calculated with LIEF library version 0.9.0.
 
@@ -39,7 +39,7 @@ The following machine learning models were evaluated:
 - Random forest (using Gini impurity as the node splitting criterion)
 - Tabular deep neural network
 
-A weighted ensemble model, which combines predictions from extra-trees, random forest, CatBoost, and deep neural network classifiers, had the highest classification accuracy and, thus, is the final model.
+A weighted ensemble model, which combines predictions from extra-trees, random forest, CatBoost, and deep neural network classifiers, had the highest classification accuracy and, thus, is used as the final model.
 
 ## Results
 |   |               model | score_test | score_val | pred_time_test | pred_time_val |    fit_time | pred_time_test_marginal | pred_time_val_marginal | fit_time_marginal | stack_level | can_infer | fit_order |
