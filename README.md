@@ -11,7 +11,7 @@ The BODMAS Malware dataset was used to train the classification model. It contai
 
 They are sorted by the timestamp in ascending order (i.e., each feature vector corresponds to one row in the metadata file). `bodmas_metadata.csv` has three columns, indicating SHA-256, when the sample first appeared, and malware family. If the malware family is empty, then it’s a benign sample.
 
-To load the feature vectors, you need to load `bodmas.npz` (a numpy compressed format) with the following code. Note that the feature values are unnormalized, which is fine for classifiers like gradient-boosted decision tree, but you may need to normalize them first when applying an MLP classifier.
+To load the feature vectors, you need to load `bodmas.npz` (a numpy compressed format) with the following code. Note that the feature values are unnormalized, which is fine for classifiers like gradient-boosted decision trees, but you may need to normalize them first when applying an MLP classifier.
 
 ``` python
 import numpy as np 
