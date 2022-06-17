@@ -2,7 +2,7 @@
 Mali: A malware classification tool (beta version).
 
 ## Goal
-The goal of this project is to build a foundation for a malware classifier using machine learning that can classify and separate PE executables into different malware families (e.g. worm, trojan, backdoor, ransomware, etc.) with high accuracy and efficiency. This foundation will then be used to create a closed-source malware classification tool that can be utilized by security researchers.
+The goal of this project is to build a foundation for a malware classifier using machine learning that can classify and separate PE executables into different malware families (e.g. worm, trojan, backdoor, ransomware, etc.) with high accuracy and efficiency. This foundation will then be used to create a malware classification tool that can be utilized by security researchers.
 
 ## Dataset
 The BODMAS Malware dataset was used to train the classification model. It contains 57,293 malware samples and 77,142 benign samples collected from August 2019 to September 2020, with carefully curated family information (581 families). You can download the dataset [here](https://drive.google.com/drive/folders/1Uf-LebLWyi9eCv97iBal7kL1NgiGEsv_). The dataset contains:
